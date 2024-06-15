@@ -10,7 +10,7 @@ from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
 from homeassistant.util import Throttle
 
-MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=3)
+MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=1)
 
 DEFAULT_NAME = "EPEX Imbalance Costs"
 
@@ -22,7 +22,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 
 
 def fetch_imbalance_costs():
-    url = "https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods136/records"
+    url = "https://opendata.elia.be/api/explore/v2.1/catalog/datasets/ods161/records"
     params = {
         "limit": 1,
         "sort": "-datetime",
@@ -35,7 +35,7 @@ def fetch_imbalance_costs():
 
         if "results" in data and data["results"]:
             record = data["results"][0]
-            imbalance_costs = record.get("predictions_silinearregressionforecast")
+            imbalance_costs = record.get("imbalanceprice")
 
             if imbalance_costs is not None:
                 return imbalance_costs
@@ -138,12 +138,12 @@ class EPEXImbalanceSensor(Entity):
         epex_prices = fetch_epexspot_prices()
 
         if epex_prices is not None:
-            total_price = epex_prices + imbalance_costs
+            total_price = -(imbalance_costs - epex_prices)
             self._state = total_price
             self._attributes = {
                 "EPEX Price": epex_prices,
                 "Imbalance Costs": imbalance_costs,
-                "Total Price": total_price,
+                "Total Injection Price": total_price,
             }
         else:
             self._state = None
