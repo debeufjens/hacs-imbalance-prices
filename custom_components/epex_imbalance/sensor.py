@@ -3,14 +3,12 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import pytz
 import voluptuous as vol
+import asyncio
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import CONF_NAME, ATTR_ATTRIBUTION
 from homeassistant.helpers.entity import Entity
 import homeassistant.helpers.config_validation as cv
-from homeassistant.util import Throttle
-
-MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=5)
 
 DEFAULT_NAME = "EPEX Imbalance Costs"
 
@@ -110,7 +108,23 @@ def fetch_epexspot_prices():
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     name = config.get(CONF_NAME)
-    async_add_entities([EPEXImbalanceSensor(name)], True)
+    sensor = EPEXImbalanceSensor(name)
+    async_add_entities([sensor], True)
+
+    async def update_sensor(now):
+        await sensor.async_update_ha_state(True)
+        schedule_next_update(now)
+
+    def schedule_next_update(now):
+        next_update = (now + timedelta(minutes=15)).replace(second=0, microsecond=0)
+        next_update_1 = next_update + timedelta(minutes=1)
+        next_update_7 = next_update + timedelta(minutes=7)
+
+        hass.helpers.event.async_track_point_in_time(update_sensor, next_update_1)
+        hass.helpers.event.async_track_point_in_time(update_sensor, next_update_7)
+
+    now = datetime.now()
+    schedule_next_update(now)
 
 
 class EPEXImbalanceSensor(Entity):
@@ -132,8 +146,7 @@ class EPEXImbalanceSensor(Entity):
     def extra_state_attributes(self):
         return self._attributes
 
-    @Throttle(MIN_TIME_BETWEEN_UPDATES)
-    def update(self):
+    async def async_update(self):
         imbalance_costs = fetch_imbalance_costs()
         epex_prices = fetch_epexspot_prices()
 
