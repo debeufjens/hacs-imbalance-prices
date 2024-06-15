@@ -1,0 +1,9 @@
+{
+    "domain": "epex_imbalance",
+    "name": "EPEX Imbalance Costs",
+    "version": "1.0.0",
+    "documentation": "https://github.com/debeufjens/hacs-imbalance-prices",
+    "dependencies": [],
+    "codeowners": ["@debeufjens"],
+    "requirements": ["requests", "beautifulsoup4", "pytz"]
+}
