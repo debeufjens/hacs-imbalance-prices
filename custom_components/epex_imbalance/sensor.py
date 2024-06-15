@@ -35,7 +35,7 @@ def fetch_imbalance_costs():
 
         if "results" in data and data["results"]:
             record = data["results"][0]
-            imbalance_costs = record.get("imbalanceprice")
+            imbalance_costs = record.get("imbalanceprice") * 0.1
 
             if imbalance_costs is not None:
                 return imbalance_costs
@@ -97,7 +97,7 @@ def fetch_epexspot_prices():
             current_time_obj = datetime.strptime(current_time, "%H:%M").time()
 
             if start_time <= current_time_obj < end_time:
-                matched_price = price
+                matched_price = price * 0.1
                 break
 
         return matched_price
